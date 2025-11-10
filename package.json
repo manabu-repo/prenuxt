@@ -13,5 +13,14 @@
     "nuxt": "^4.2.0",
     "vue": "^3.5.22",
     "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "@iconify-json/carbon": "^1.2.14",
+    "@iconify-json/mdi": "^1.2.3",
+    "@iconify-json/tabler": "^1.2.23",
+    "@nuxtjs/color-mode": "^3.5.2",
+    "@unocss/nuxt": "^66.5.5",
+    "@unocss/reset": "^66.5.5",
+    "unocss": "^66.5.5"
   }
 }
