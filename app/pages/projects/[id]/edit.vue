@@ -1,4 +1,7 @@
 <script setup>
+// 导入 PDF 导出优化样式
+import '~/assets/css/pdf-export.css'
+
 definePageMeta({
   layout: 'default'
 })

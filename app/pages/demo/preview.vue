@@ -1,4 +1,7 @@
 <script setup lang="ts">
+// 导入 PDF 导出优化样式
+import '~/assets/css/pdf-export.css'
+
 definePageMeta({
   layout: 'default'
 })
@@ -13,13 +16,17 @@ useHead({
 // 加载文本文件
 const content = ref('<p>正在加载文件...</p>')
 const textData = ref<string | null>(null)
+const editorRef = ref<HTMLElement | null>(null)
+
+// 使用 PDF 导出
+const { isExporting, exportQuillToPdf } = usePdfExport()
 
 onMounted(async () => {
   try {
     const response = await $fetch<string>('/demo.text', {
       responseType: 'text'
     })
-    
+
     // 将纯文本转换为 HTML 格式（保留换行和段落）
     const htmlContent = response
       .split('\n\n')
@@ -27,7 +34,7 @@ onMounted(async () => {
       .filter((para: string) => para.length > 0)
       .map((para: string) => `<p>${para.replace(/\n/g, '<br>')}</p>`)
       .join('')
-    
+
     textData.value = htmlContent
     content.value = htmlContent
   } catch (error) {
@@ -35,6 +42,21 @@ onMounted(async () => {
     content.value = '<p style="color: red;">❌ 文件加载失败</p>'
   }
 })
+
+// 导出为 PDF
+const exportToPDF = async () => {
+  if (!editorRef.value) return
+
+  const result = await exportQuillToPdf(editorRef.value as HTMLElement, {
+    showPageNumbers: true,
+    quality: 0.98,
+    scale: 2
+  })
+
+  if (!result?.success) {
+    alert('导出 PDF 失败，请查看控制台')
+  }
+}
 </script>
 
 <template>
@@ -42,19 +64,31 @@ onMounted(async () => {
     <PageHeader 
       title="Quill Editor Demo" 
       description="演示富文本编辑器加载外部文本文件"
-    />
-    
+    >
+      <template #actions>
+        <AppButton 
+          @click="exportToPDF"
+          :loading="isExporting"
+          :disabled="isExporting"
+          variant="primary"
+        >
+          <i class="i-mdi-file-pdf-box mr-2" />
+          {{ isExporting ? '导出中...' : '导出 PDF' }}
+        </AppButton>
+      </template>
+    </PageHeader>
+
     <AppCard padding="lg">
-      <div class="quill-container">
-        <QuillEditor 
-          v-model="content" 
-          theme="snow" 
+      <div ref="editorRef" class="quill-container">
+        <QuillEditor
+          v-model="content"
+          theme="snow"
           toolbar="full"
           placeholder="开始编辑..."
         />
       </div>
     </AppCard>
-    
+
     <AppCard padding="sm">
       <div class="text-sm text-gray-600 dark:text-gray-400">
         <strong>源文件:</strong> /public/demo.text 
