@@ -1,6 +1,11 @@
 <script setup>
-import { QuillEditor } from '@vueup/vue-quill'
-import '@vueup/vue-quill/dist/vue-quill.snow.css'
+// Import only on client side to avoid SSR issues
+const QuillEditor = process.client ? (await import('@vueup/vue-quill')).QuillEditor : null
+
+// Import styles only on client
+if (process.client) {
+  await import('@vueup/vue-quill/dist/vue-quill.snow.css')
+}
 
 const props = defineProps({
   modelValue: {
@@ -73,16 +78,29 @@ const editorToolbar = computed(() => {
 </script>
 
 <template>
-  <div class="quill-editor-wrapper">
-    <QuillEditor
-      v-model:content="content"
-      :theme="theme"
-      :toolbar="editorToolbar"
-      :placeholder="placeholder"
-      :readOnly="readOnly"
-      contentType="html"
-    />
-  </div>
+  <ClientOnly>
+    <div class="quill-editor-wrapper">
+      <component
+        :is="QuillEditor"
+        v-model:content="content"
+        :theme="theme"
+        :toolbar="editorToolbar"
+        :placeholder="placeholder"
+        :readOnly="readOnly"
+        contentType="html"
+      />
+    </div>
+    <template #fallback>
+      <div class="quill-editor-wrapper">
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 p-4 min-h-[200px] flex items-center justify-center">
+          <div class="text-gray-400 dark:text-gray-500 flex items-center gap-2">
+            <i class="i-carbon-spinner animate-spin w-5 h-5"></i>
+            <span>加载编辑器...</span>
+          </div>
+        </div>
+      </div>
+    </template>
+  </ClientOnly>
 </template>
 
 <style scoped>

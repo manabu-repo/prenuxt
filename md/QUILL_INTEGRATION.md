@@ -8,14 +8,21 @@
    ```
 
 2. **创建 QuillEditor 组件** (`app/components/QuillEditor.vue`)
-   - 支持 v-model 双向绑定
-   - 三种工具栏预设：`minimal`, `essential`, `full`
-   - 支持暗色模式
-   - 响应式设计
+   - ✅ 支持 v-model 双向绑定
+   - ✅ 三种工具栏预设：`minimal`, `essential`, `full`
+   - ✅ 支持暗色模式
+   - ✅ 响应式设计
+   - ✅ **SSR 兼容** - 使用 `ClientOnly` 包装，避免 `document is not defined` 错误
+   - ✅ 加载状态显示（服务端渲染时显示"加载编辑器..."）
 
 3. **集成到项目编辑页** (`app/pages/projects/[id]/edit.vue`)
    - 添加了富文本编辑器用于编辑项目详细内容
    - 使用 `toolbar="full"` 提供完整的编辑功能
+
+4. **创建演示页面** (`app/pages/demo/preview.vue`)
+   - 从 `/public/demo.text` 加载外部文本文件 (40KB)
+   - 自动转换纯文本为 HTML 格式（段落和换行）
+   - 展示 Quill 编辑器的完整功能
 
 ## 使用方法
 
