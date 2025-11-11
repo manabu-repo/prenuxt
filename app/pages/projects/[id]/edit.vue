@@ -1,4 +1,8 @@
 <script setup>
+definePageMeta({
+  layout: 'default'
+})
+
 const route = useRoute()
 const router = useRouter()
 
@@ -15,6 +19,7 @@ const project = ref({
   id: route.params.id,
   name: '示例项目 ' + route.params.id,
   description: '这是一个示例项目的详细描述',
+  content: '<h2>项目详细内容</h2><p>使用 Quill 编辑器编辑项目的详细内容，支持富文本格式。</p><ul><li>支持列表</li><li>支持格式化</li><li>支持插入图片和链接</li></ul>',
   status: 'active',
   tags: ['nuxt', 'vue', 'typescript'],
   createdAt: '2025-11-01',
@@ -30,12 +35,23 @@ const saveProject = async () => {
   // 模拟保存
   await new Promise(resolve => setTimeout(resolve, 1000))
   saving.value = false
+  
+  // 使用 Nuxt 的通知系统（这里简化为 alert）
   alert('项目保存成功！')
 }
 
 // 返回列表
 const goBack = () => {
   router.push('/projects')
+}
+
+// 删除项目
+const deleteProject = () => {
+  if (confirm('确定要删除这个项目吗？此操作无法撤销。')) {
+    // 模拟删除
+    alert('项目已删除')
+    router.push('/projects')
+  }
 }
 </script>
 
@@ -51,23 +67,19 @@ const goBack = () => {
     </div>
     
     <!-- 页头 -->
-    <div class="flex justify-between items-center">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-          编辑项目
-        </h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">
-          项目 ID: {{ route.params.id }}
-        </p>
-      </div>
-      <button @click="goBack" class="btn">
-        <i class="i-carbon-arrow-left w-4 h-4"></i>
-        返回列表
-      </button>
-    </div>
+    <PageHeader 
+      title="编辑项目" 
+      :description="`项目 ID: ${route.params.id}`"
+    >
+      <template #actions>
+        <AppButton @click="goBack" icon="i-carbon-arrow-left">
+          返回列表
+        </AppButton>
+      </template>
+    </PageHeader>
     
     <!-- 编辑表单 -->
-    <div class="card p-8">
+    <AppCard padding="lg">
       <form @submit.prevent="saveProject" class="space-y-6">
         <!-- 项目名称 -->
         <div>
@@ -83,16 +95,28 @@ const goBack = () => {
           />
         </div>
         
-        <!-- 项目描述 -->
+        <!-- 项目简述 -->
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            项目描述
+            项目简述
           </label>
           <textarea
             v-model="project.description"
             class="input w-full"
-            rows="4"
-            placeholder="输入项目描述"
+            rows="3"
+            placeholder="输入项目简短描述"
+          />
+        </div>
+        
+        <!-- 项目详细内容（Quill 编辑器）-->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            项目详细内容
+          </label>
+          <QuillEditor
+            v-model="project.content"
+            placeholder="编辑项目的详细内容..."
+            toolbar="full"
           />
         </div>
         
@@ -154,6 +178,7 @@ const goBack = () => {
             @click="goBack"
             class="btn"
           >
+            <i class="i-carbon-arrow-left w-4 h-4"></i>
             取消
           </button>
           <button
@@ -167,20 +192,19 @@ const goBack = () => {
           </button>
         </div>
       </form>
-    </div>
+    </AppCard>
     
     <!-- 危险操作区域 -->
-    <div class="card p-6 border-red-200 dark:border-red-900">
+    <AppCard class="border-red-200 dark:border-red-900">
       <h3 class="text-lg font-semibold text-red-600 dark:text-red-400 mb-2">
         危险操作
       </h3>
       <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
         删除项目将无法恢复，请谨慎操作
       </p>
-      <button class="btn-danger">
-        <i class="i-carbon-trash-can w-4 h-4"></i>
+      <AppButton variant="danger" icon="i-carbon-trash-can" @click="deleteProject">
         删除项目
-      </button>
-    </div>
+      </AppButton>
+    </AppCard>
   </div>
 </template>
