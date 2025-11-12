@@ -1,9 +1,9 @@
 /**
  * PDF Export Composable
- * 统一的 PDF 导出接口，支持 html2pdf、jsPDF 和 Playwright 三种导出方式
+ * 统一的 PDF 导出接口，支持 html2pdf、jsPDF、Playwright 和 pdfmake 四种导出方式
  */
 
-export type PdfExportMode = 'html2pdf' | 'jspdf' | 'playwright'
+export type PdfExportMode = 'html2pdf' | 'jspdf' | 'playwright' | 'pdfmake'
 
 export interface PdfExportOptions {
   /**
@@ -11,6 +11,7 @@ export interface PdfExportOptions {
    * - 'html2pdf': 图片模式，保留完整样式但文字不可选（客户端）
    * - 'jspdf': 文本模式，文字可选但样式简单（客户端）
    * - 'playwright': 服务端渲染，文字可选且样式完整（推荐，需要服务端）
+   * - 'pdfmake': 结构化文档，文字可选且无截断问题（客户端）
    * @default 'html2pdf'
    */
   mode?: PdfExportMode
@@ -98,12 +99,14 @@ export const usePdfExport = () => {
   const html2pdfComposable = useHtml2pdf()
   const jspdfComposable = useJspdf()
   const playwrightComposable = usePlaywright()
+  const pdfmakeComposable = usePdfmake()
 
-  // 合并三个 composable 的 isExporting 状态
+  // 合并四个 composable 的 isExporting 状态
   const isExporting = computed(() => 
     html2pdfComposable.isExporting.value || 
     jspdfComposable.isExporting.value ||
-    playwrightComposable.isExporting.value
+    playwrightComposable.isExporting.value ||
+    pdfmakeComposable.isExporting.value
   )
 
   /**
@@ -117,7 +120,21 @@ export const usePdfExport = () => {
   ) => {
     const { mode = 'html2pdf', ...restOptions } = options
 
-    if (mode === 'playwright') {
+    if (mode === 'pdfmake') {
+      // pdfmake 模式：结构化文档
+      return await pdfmakeComposable.exportToPdf(element, {
+        pageMargins: restOptions.margin ? [
+          restOptions.margin[3] * 2.83, // 左 (mm to pt)
+          restOptions.margin[0] * 2.83, // 上
+          restOptions.margin[1] * 2.83, // 右
+          restOptions.margin[2] * 2.83  // 下
+        ] as [number, number, number, number] : undefined,
+        pageSize: restOptions.format?.toUpperCase() as any,
+        pageOrientation: restOptions.orientation,
+        showPageNumbers: restOptions.showPageNumbers,
+        pageNumberFormat: restOptions.pageNumberFormat
+      })
+    } else if (mode === 'playwright') {
       // Playwright 模式：服务端渲染
       return await playwrightComposable.exportToPdf(element, {
         margin: restOptions.margin ? {
@@ -151,7 +168,20 @@ export const usePdfExport = () => {
   ) => {
     const { mode = 'html2pdf', ...restOptions } = options
 
-    if (mode === 'playwright') {
+    if (mode === 'pdfmake') {
+      return await pdfmakeComposable.exportQuillToPdf(editorContainer, {
+        pageMargins: restOptions.margin ? [
+          restOptions.margin[3] * 2.83,
+          restOptions.margin[0] * 2.83,
+          restOptions.margin[1] * 2.83,
+          restOptions.margin[2] * 2.83
+        ] as [number, number, number, number] : undefined,
+        pageSize: restOptions.format?.toUpperCase() as any,
+        pageOrientation: restOptions.orientation,
+        showPageNumbers: restOptions.showPageNumbers,
+        pageNumberFormat: restOptions.pageNumberFormat
+      })
+    } else if (mode === 'playwright') {
       return await playwrightComposable.exportQuillToPdf(editorContainer, {
         margin: restOptions.margin ? {
           top: `${restOptions.margin[0]}mm`,
@@ -187,13 +217,15 @@ export const usePdfExport = () => {
     html2pdfComposable.removePageBreakSafetyMargin(element)
   }
 
-  // 兼容旧接口：直接导出三种模式的函数
+  // 兼容旧接口：直接导出四种模式的函数
   const exportHtml2pdf = html2pdfComposable.exportToPdf
   const exportQuillHtml2pdf = html2pdfComposable.exportQuillToPdf
   const exportJspdf = jspdfComposable.exportTextPdf
   const exportQuillJspdf = jspdfComposable.exportQuillTextPdf
   const exportPlaywright = playwrightComposable.exportToPdf
   const exportQuillPlaywright = playwrightComposable.exportQuillToPdf
+  const exportPdfmake = pdfmakeComposable.exportToPdf
+  const exportQuillPdfmake = pdfmakeComposable.exportQuillToPdf
 
   return {
     // 状态
@@ -210,6 +242,8 @@ export const usePdfExport = () => {
     exportQuillJspdf,
     exportPlaywright,
     exportQuillPlaywright,
+    exportPdfmake,
+    exportQuillPdfmake,
     
     // 工具函数
     addPageBreakSafetyMargin,

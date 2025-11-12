@@ -48,7 +48,7 @@ onMounted(async () => {
 
 // 导出为 PDF
 // 导出 PDF
-const exportToPDF = async (mode: 'html2pdf' | 'jspdf' | 'playwright' = 'html2pdf') => {
+const exportToPDF = async (mode: 'html2pdf' | 'jspdf' | 'playwright' | 'pdfmake' = 'html2pdf') => {
   if (!editorRef.value) return
 
   const result = await exportQuillToPdf(editorRef.value as HTMLElement, {
@@ -62,7 +62,8 @@ const exportToPDF = async (mode: 'html2pdf' | 'jspdf' | 'playwright' = 'html2pdf
     const modeNames = {
       html2pdf: '图片',
       jspdf: '文本',
-      playwright: 'Playwright'
+      playwright: 'Playwright',
+      pdfmake: 'pdfMake'
     }
     alert(`导出 ${modeNames[mode]} PDF 失败，请查看控制台`)
   }
@@ -135,6 +136,11 @@ const saveFile = async (format: 'html' | 'text' | 'markdown') => {
                 label: '文本模式（客户端）',
                 icon: 'i-mdi-text-box-outline',
                 onClick: () => exportToPDF('jspdf')
+              },
+              {
+                label: 'pdfMake（客户端）✨',
+                icon: 'i-mdi-file-document',
+                onClick: () => exportToPDF('pdfmake')
               },
               {
                 label: 'Playwright（服务端）⭐',
