@@ -6,6 +6,7 @@ export interface PdfExportOptions {
   scale?: number
   format?: 'a4' | 'letter' | 'legal'
   orientation?: 'portrait' | 'landscape'
+  textSelectable?: boolean // 新增：文字是否可选中（实验性功能）
 }
 
 export function usePdfExport() {
@@ -308,10 +309,156 @@ export function usePdfExport() {
     }
   }
 
+  /**
+   * 使用纯文本模式导出 PDF（文字可选中）
+   * 注意：此方法会丢失大部分样式，但文字可以被选中和复制
+   * @param element - 要导出的 HTML 元素
+   * @param options - 导出选项
+   */
+  const exportTextPdf = async (
+    element: HTMLElement | string,
+    options: PdfExportOptions = {}
+  ) => {
+    if (!process.client) return
+
+    isExporting.value = true
+
+    try {
+      // 动态导入 jsPDF
+      const { jsPDF } = await import('jspdf')
+
+      // 获取目标元素
+      let targetElement: HTMLElement | null = null
+
+      if (typeof element === 'string') {
+        targetElement = document.querySelector(element) as HTMLElement
+      } else {
+        targetElement = element
+      }
+
+      if (!targetElement) {
+        throw new Error('无法找到目标元素')
+      }
+
+      // 合并默认配置
+      const {
+        margin = [20, 15, 25, 15],
+        showPageNumbers = true,
+        pageNumberFormat = (current: number, total: number) => `${current} / ${total}`,
+        format = 'a4',
+        orientation = 'portrait'
+      } = options
+
+      // 创建 PDF 实例
+      const pdf = new jsPDF({
+        orientation: orientation === 'landscape' ? 'landscape' : 'portrait',
+        unit: 'mm',
+        format
+      })
+
+      // 提取纯文本内容
+      const textContent = targetElement.innerText || targetElement.textContent || ''
+      
+      // 计算页面尺寸
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      const [marginTop, marginRight, marginBottom, marginLeft] = margin
+      
+      // 内容区域宽度
+      const contentWidth = pageWidth - marginLeft - marginRight
+      
+      // 设置字体
+      pdf.setFontSize(12)
+      pdf.setTextColor(0, 0, 0)
+      
+      // 分段处理文本
+      const paragraphs = textContent.split('\n').filter(p => p.trim().length > 0)
+      let currentY = marginTop
+      
+      paragraphs.forEach((paragraph) => {
+        // 使用 splitTextToSize 自动换行
+        const lines = pdf.splitTextToSize(paragraph, contentWidth)
+        
+        lines.forEach((line: string) => {
+          // 检查是否需要新页面
+          if (currentY + 10 > pageHeight - marginBottom) {
+            pdf.addPage()
+            currentY = marginTop
+          }
+          
+          // 添加文本（文字可选中）
+          pdf.text(line, marginLeft, currentY)
+          currentY += 7 // 行高
+        })
+        
+        // 段落间距
+        currentY += 3
+      })
+
+      // 添加页码
+      if (showPageNumbers) {
+        addPageNumbers(pdf, margin, pageNumberFormat)
+      }
+
+      // 在新窗口打开
+      const pdfBlob = pdf.output('blob')
+      const blobUrl = URL.createObjectURL(pdfBlob)
+      window.open(blobUrl, '_blank')
+
+      return { success: true }
+    } catch (error) {
+      console.error('导出文本 PDF 失败:', error)
+      return { success: false, error }
+    } finally {
+      isExporting.value = false
+    }
+  }
+
+  /**
+   * 导出 Quill 编辑器为可选文本的 PDF
+   * @param editorContainer - 编辑器容器元素或选择器
+   * @param options - 导出选项
+   */
+  const exportQuillTextPdf = async (
+    editorContainer: HTMLElement | string,
+    options: PdfExportOptions = {}
+  ) => {
+    if (!process.client) return
+
+    try {
+      // 获取容器元素
+      let container: HTMLElement | null = null
+
+      if (typeof editorContainer === 'string') {
+        container = document.querySelector(editorContainer) as HTMLElement
+      } else {
+        container = editorContainer
+      }
+
+      if (!container) {
+        throw new Error('无法找到编辑器容器')
+      }
+
+      // 获取 Quill 编辑器内容区域
+      const editorContent = container.querySelector('.ql-editor') as HTMLElement
+
+      if (!editorContent) {
+        throw new Error('无法找到编辑器内容')
+      }
+
+      return await exportTextPdf(editorContent, options)
+    } catch (error) {
+      console.error('导出 Quill 文本 PDF 失败:', error)
+      return { success: false, error }
+    }
+  }
+
   return {
     isExporting: readonly(isExporting),
     exportToPdf,
     exportQuillToPdf,
+    exportTextPdf,
+    exportQuillTextPdf,
     addPageBreakSafetyMargin,
     removePageBreakSafetyMargin
   }

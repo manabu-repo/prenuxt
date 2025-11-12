@@ -19,7 +19,7 @@ const textData = ref<string | null>(null)
 const editorRef = ref<HTMLElement | null>(null)
 
 // 使用 PDF 导出
-const { isExporting, exportQuillToPdf } = usePdfExport()
+const { isExporting, exportQuillToPdf, exportQuillTextPdf } = usePdfExport()
 
 // 使用文件保存
 const { isSaving, saveQuillContent } = useFileSave()
@@ -47,17 +47,30 @@ onMounted(async () => {
 })
 
 // 导出为 PDF
-const exportToPDF = async () => {
+// 导出 PDF
+const exportToPDF = async (textMode = false) => {
   if (!editorRef.value) return
 
-  const result = await exportQuillToPdf(editorRef.value as HTMLElement, {
-    showPageNumbers: true,
-    quality: 0.98,
-    scale: 2
-  })
+  if (textMode) {
+    // 文本模式：文字可选中，但丢失样式
+    const result = await exportQuillTextPdf(editorRef.value as HTMLElement, {
+      showPageNumbers: true
+    })
 
-  if (!result?.success) {
-    alert('导出 PDF 失败，请查看控制台')
+    if (!result?.success) {
+      alert('导出文本 PDF 失败，请查看控制台')
+    }
+  } else {
+    // 图片模式：保留样式，但文字不可选中
+    const result = await exportQuillToPdf(editorRef.value as HTMLElement, {
+      showPageNumbers: true,
+      quality: 0.98,
+      scale: 2
+    })
+
+    if (!result?.success) {
+      alert('导出 PDF 失败，请查看控制台')
+    }
   }
 }
 
@@ -111,16 +124,26 @@ const saveFile = async (format: 'html' | 'text' | 'markdown') => {
             ]"
           />
 
-          <!-- PDF 导出按钮 -->
-          <AppButton 
-            @click="exportToPDF"
+          <!-- PDF 导出下拉菜单 -->
+          <AppDropdown
+            label="导出 PDF"
+            icon="i-mdi-file-pdf-box"
+            variant="primary"
             :loading="isExporting"
             :disabled="isExporting"
-            variant="primary"
-          >
-            <i class="i-mdi-file-pdf-box mr-2" />
-            {{ isExporting ? '导出中...' : '导出 PDF' }}
-          </AppButton>
+            :items="[
+              {
+                label: '图片模式（保留样式）',
+                icon: 'i-mdi-image',
+                onClick: () => exportToPDF(false)
+              },
+              {
+                label: '文本模式（可选中）',
+                icon: 'i-mdi-text-box-outline',
+                onClick: () => exportToPDF(true)
+              }
+            ]"
+          />
         </div>
       </template>
     </PageHeader>
