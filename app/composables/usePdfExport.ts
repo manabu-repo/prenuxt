@@ -1,15 +1,16 @@
 /**
  * PDF Export Composable
- * 统一的 PDF 导出接口，支持 html2pdf 和 jsPDF 两种导出方式
+ * 统一的 PDF 导出接口，支持 html2pdf、jsPDF 和 Playwright 三种导出方式
  */
 
-export type PdfExportMode = 'html2pdf' | 'jspdf'
+export type PdfExportMode = 'html2pdf' | 'jspdf' | 'playwright'
 
 export interface PdfExportOptions {
   /**
    * 导出模式
-   * - 'html2pdf': 图片模式，保留完整样式但文字不可选
-   * - 'jspdf': 文本模式，文字可选但样式简单
+   * - 'html2pdf': 图片模式，保留完整样式但文字不可选（客户端）
+   * - 'jspdf': 文本模式，文字可选但样式简单（客户端）
+   * - 'playwright': 服务端渲染，文字可选且样式完整（推荐，需要服务端）
    * @default 'html2pdf'
    */
   mode?: PdfExportMode
@@ -61,6 +62,23 @@ export interface PdfExportOptions {
    * @default 3
    */
   paragraphSpacing?: number
+
+  /**
+   * 是否打印背景色和图片 - 仅 playwright 模式
+   * @default true
+   */
+  printBackground?: boolean
+
+  /**
+   * 是否显示页眉页脚 - 仅 playwright 模式
+   * @default false
+   */
+  displayHeaderFooter?: boolean
+
+  /**
+   * 自定义 CSS - 仅 playwright 模式
+   */
+  customCss?: string
   
   /**
    * 纸张格式
@@ -79,10 +97,13 @@ export const usePdfExport = () => {
   // 导入底层 hooks
   const html2pdfComposable = useHtml2pdf()
   const jspdfComposable = useJspdf()
+  const playwrightComposable = usePlaywright()
 
-  // 合并两个 composable 的 isExporting 状态
+  // 合并三个 composable 的 isExporting 状态
   const isExporting = computed(() => 
-    html2pdfComposable.isExporting.value || jspdfComposable.isExporting.value
+    html2pdfComposable.isExporting.value || 
+    jspdfComposable.isExporting.value ||
+    playwrightComposable.isExporting.value
   )
 
   /**
@@ -96,9 +117,25 @@ export const usePdfExport = () => {
   ) => {
     const { mode = 'html2pdf', ...restOptions } = options
 
-    if (mode === 'jspdf') {
+    if (mode === 'playwright') {
+      // Playwright 模式：服务端渲染
+      return await playwrightComposable.exportToPdf(element, {
+        margin: restOptions.margin ? {
+          top: `${restOptions.margin[0]}mm`,
+          right: `${restOptions.margin[1]}mm`,
+          bottom: `${restOptions.margin[2]}mm`,
+          left: `${restOptions.margin[3]}mm`
+        } : undefined,
+        format: (restOptions.format?.toUpperCase() as any) || 'A4',
+        printBackground: restOptions.printBackground,
+        displayHeaderFooter: restOptions.displayHeaderFooter,
+        customCss: restOptions.customCss
+      })
+    } else if (mode === 'jspdf') {
+      // jsPDF 模式：文本模式
       return await jspdfComposable.exportTextPdf(element, restOptions)
     } else {
+      // html2pdf 模式：图片模式
       return await html2pdfComposable.exportToPdf(element, restOptions)
     }
   }
@@ -114,7 +151,20 @@ export const usePdfExport = () => {
   ) => {
     const { mode = 'html2pdf', ...restOptions } = options
 
-    if (mode === 'jspdf') {
+    if (mode === 'playwright') {
+      return await playwrightComposable.exportQuillToPdf(editorContainer, {
+        margin: restOptions.margin ? {
+          top: `${restOptions.margin[0]}mm`,
+          right: `${restOptions.margin[1]}mm`,
+          bottom: `${restOptions.margin[2]}mm`,
+          left: `${restOptions.margin[3]}mm`
+        } : undefined,
+        format: (restOptions.format?.toUpperCase() as any) || 'A4',
+        printBackground: restOptions.printBackground,
+        displayHeaderFooter: restOptions.displayHeaderFooter,
+        customCss: restOptions.customCss
+      })
+    } else if (mode === 'jspdf') {
       return await jspdfComposable.exportQuillTextPdf(editorContainer, restOptions)
     } else {
       return await html2pdfComposable.exportQuillToPdf(editorContainer, restOptions)
@@ -137,11 +187,13 @@ export const usePdfExport = () => {
     html2pdfComposable.removePageBreakSafetyMargin(element)
   }
 
-  // 兼容旧接口：直接导出两种模式的函数
+  // 兼容旧接口：直接导出三种模式的函数
   const exportHtml2pdf = html2pdfComposable.exportToPdf
   const exportQuillHtml2pdf = html2pdfComposable.exportQuillToPdf
   const exportJspdf = jspdfComposable.exportTextPdf
   const exportQuillJspdf = jspdfComposable.exportQuillTextPdf
+  const exportPlaywright = playwrightComposable.exportToPdf
+  const exportQuillPlaywright = playwrightComposable.exportQuillToPdf
 
   return {
     // 状态
@@ -156,6 +208,8 @@ export const usePdfExport = () => {
     exportQuillHtml2pdf,
     exportJspdf,
     exportQuillJspdf,
+    exportPlaywright,
+    exportQuillPlaywright,
     
     // 工具函数
     addPageBreakSafetyMargin,

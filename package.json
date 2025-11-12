@@ -23,8 +23,10 @@
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/tabler": "^1.2.23",
     "@nuxtjs/color-mode": "^3.5.2",
+    "@playwright/test": "^1.56.1",
     "@unocss/nuxt": "^66.5.5",
     "@unocss/reset": "^66.5.5",
+    "playwright": "^1.56.1",
     "unocss": "^66.5.5"
   }
 }

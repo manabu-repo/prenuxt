@@ -8,45 +8,56 @@
 // 导入
 const { isExporting, exportQuillToPdf } = usePdfExport()
 
-// 图片模式（保留样式）
+// 图片模式（客户端，保留样式）
 await exportQuillToPdf(editorElement, {
-  mode: 'html2pdf',  // 默认值，可省略
+  mode: 'html2pdf',
   showPageNumbers: true,
   quality: 0.98,
   scale: 2
 })
 
-// 文本模式（可选中）
+// 文本模式（客户端，可选中）
 await exportQuillToPdf(editorElement, {
   mode: 'jspdf',
   showPageNumbers: true,
   fontSize: 12
+})
+
+// Playwright 模式（服务端，完美质量）⭐ 推荐
+await exportQuillToPdf(editorElement, {
+  mode: 'playwright',
+  printBackground: true
 })
 ```
 
 ### 2. 直接使用底层函数
 
 ```typescript
-// 只使用 html2pdf
+// 只使用 html2pdf（客户端）
 const { exportQuillToPdf } = useHtml2pdf()
 
-// 只使用 jspdf
+// 只使用 jspdf（客户端）
 const { exportQuillTextPdf } = useJspdf()
+
+// 只使用 playwright（服务端）⭐
+const { exportQuillToPdf } = usePlaywright()
 ```
 
 ## 模式选择
 
 | 需求 | 选择模式 | 特点 |
 |------|---------|------|
-| 精美排版的报告 | `html2pdf` | 完整样式，不可选文字 |
-| 需要复制文字 | `jspdf` | 可选文字，简单格式 |
-| 包含图片/表格 | `html2pdf` | 支持，jspdf 不支持 |
-| 小文件体积 | `jspdf` | 文件更小 |
-| 快速导出 | `jspdf` | 速度更快 |
+| 生产环境高质量 | `playwright` ⭐ | **文字可选+样式完整** |
+| 简单客户端场景 | `html2pdf` | 完整样式，不可选文字 |
+| 纯文本报告 | `jspdf` | 可选文字，简单格式 |
+| 包含图片/表格 | `playwright` / `html2pdf` | 完整支持 |
+| 无服务端环境 | `html2pdf` / `jspdf` | 纯客户端 |
+| 小文件体积 | `jspdf` | 文件最小 |
+| 快速导出 | `jspdf` | 速度最快 |
 
 ## 常用配置
 
-### html2pdf 模式
+### html2pdf 模式（客户端）
 ```typescript
 {
   mode: 'html2pdf',
@@ -59,7 +70,7 @@ const { exportQuillTextPdf } = useJspdf()
 }
 ```
 
-### jspdf 模式
+### jspdf 模式（客户端）
 ```typescript
 {
   mode: 'jspdf',
@@ -73,6 +84,17 @@ const { exportQuillTextPdf } = useJspdf()
 }
 ```
 
+### playwright 模式（服务端）⭐ 推荐
+```typescript
+{
+  mode: 'playwright',
+  margin: [20, 15, 25, 15],  // 会自动转换为 mm 单位
+  printBackground: true,      // 打印背景色
+  displayHeaderFooter: false, // 页眉页脚
+  format: 'a4'
+}
+```
+
 ## 在组件中使用
 
 ### 下拉菜单方式
@@ -80,7 +102,7 @@ const { exportQuillTextPdf } = useJspdf()
 <script setup lang="ts">
 const { isExporting, exportQuillToPdf } = usePdfExport()
 
-const exportPDF = (mode: 'html2pdf' | 'jspdf') => {
+const exportPDF = (mode: 'html2pdf' | 'jspdf' | 'playwright') => {
   exportQuillToPdf(editorRef.value, { mode })
 }
 </script>
@@ -90,8 +112,9 @@ const exportPDF = (mode: 'html2pdf' | 'jspdf') => {
     label="导出 PDF"
     :loading="isExporting"
     :items="[
-      { label: '图片模式', onClick: () => exportPDF('html2pdf') },
-      { label: '文本模式', onClick: () => exportPDF('jspdf') }
+      { label: '图片模式（客户端）', onClick: () => exportPDF('html2pdf') },
+      { label: '文本模式（客户端）', onClick: () => exportPDF('jspdf') },
+      { label: 'Playwright（服务端）⭐', onClick: () => exportPDF('playwright') }
     ]"
   />
 </template>
@@ -159,8 +182,9 @@ if (!result?.success) {
 
 ```json
 {
-  "html2pdf.js": "^0.12.1",  // html2pdf 模式
-  "jspdf": "^3.0.3"          // jspdf 模式
+  "html2pdf.js": "^0.12.1",  // html2pdf 模式（客户端）
+  "jspdf": "^3.0.3",          // jspdf 模式（客户端）
+  "playwright": "^1.56.1"     // playwright 模式（服务端）⭐
 }
 ```
 
@@ -168,21 +192,34 @@ if (!result?.success) {
 
 ```
 app/composables/
-├── useHtml2pdf.ts      # html2pdf 封装
-├── useJspdf.ts         # jsPDF 封装
+├── useHtml2pdf.ts      # html2pdf 封装（客户端）
+├── useJspdf.ts         # jsPDF 封装（客户端）
+├── usePlaywright.ts    # Playwright 封装（服务端）⭐
 └── usePdfExport.ts     # 统一接口 ⭐ 推荐使用
+
+server/api/
+└── export-pdf.post.ts  # Playwright API 端点
 ```
 
 ## 常见问题
 
 ### Q: 如何选择模式？
-A: 需要精美排版用 `html2pdf`，需要文字可选用 `jspdf`
+A: 
+- **生产环境**: 使用 `playwright`（最佳质量）
+- **无服务端**: 使用 `html2pdf`（客户端，样式完整）
+- **纯文本**: 使用 `jspdf`（文字可选）
+
+### Q: Playwright 需要什么环境？
+A: 需要 Node.js 后端和 Chromium 浏览器
 
 ### Q: 能否同时保留样式和文字可选？
-A: 当前不能，这是技术限制。未来可考虑 Puppeteer 后端方案
+A: 可以！使用 `playwright` 模式（服务端）
 
 ### Q: jspdf 模式为什么没有颜色？
 A: jspdf 使用纯文本 API，只支持基础格式
+
+### Q: 如何部署 Playwright？
+A: 参考 [Playwright PDF 指南](./PLAYWRIGHT_PDF_GUIDE.md)
 
 ### Q: 如何添加新的导出方式？
 A: 创建新 composable，在 usePdfExport 中集成即可
@@ -196,5 +233,6 @@ A: 创建新 composable，在 usePdfExport 中集成即可
 ## 相关文档
 
 - 📖 [架构文档](./PDF_EXPORT_ARCHITECTURE.md)
+- 📖 [Playwright 指南](./PLAYWRIGHT_PDF_GUIDE.md) ⭐
 - 📖 [重构总结](./PDF_EXPORT_REFACTOR.md)
 - 📖 [方案对比](./PDF_EXPORT_SOLUTIONS.md)

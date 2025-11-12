@@ -48,7 +48,7 @@ onMounted(async () => {
 
 // 导出为 PDF
 // 导出 PDF
-const exportToPDF = async (mode: 'html2pdf' | 'jspdf' = 'html2pdf') => {
+const exportToPDF = async (mode: 'html2pdf' | 'jspdf' | 'playwright' = 'html2pdf') => {
   if (!editorRef.value) return
 
   const result = await exportQuillToPdf(editorRef.value as HTMLElement, {
@@ -59,7 +59,12 @@ const exportToPDF = async (mode: 'html2pdf' | 'jspdf' = 'html2pdf') => {
   })
 
   if (!result?.success) {
-    alert(`导出 ${mode === 'html2pdf' ? '图片' : '文本'} PDF 失败，请查看控制台`)
+    const modeNames = {
+      html2pdf: '图片',
+      jspdf: '文本',
+      playwright: 'Playwright'
+    }
+    alert(`导出 ${modeNames[mode]} PDF 失败，请查看控制台`)
   }
 }
 
@@ -122,14 +127,19 @@ const saveFile = async (format: 'html' | 'text' | 'markdown') => {
             :disabled="isExporting"
             :items="[
               {
-                label: '图片模式（保留样式）',
+                label: '图片模式（客户端）',
                 icon: 'i-mdi-image',
                 onClick: () => exportToPDF('html2pdf')
               },
               {
-                label: '文本模式（可选中）',
+                label: '文本模式（客户端）',
                 icon: 'i-mdi-text-box-outline',
                 onClick: () => exportToPDF('jspdf')
+              },
+              {
+                label: 'Playwright（服务端）⭐',
+                icon: 'i-mdi-server',
+                onClick: () => exportToPDF('playwright')
               }
             ]"
           />
