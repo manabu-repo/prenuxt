@@ -21,6 +21,9 @@ const editorRef = ref<HTMLElement | null>(null)
 // 使用 PDF 导出
 const { isExporting, exportQuillToPdf } = usePdfExport()
 
+// 使用文件保存
+const { isSaving, saveQuillContent } = useFileSave()
+
 onMounted(async () => {
   try {
     const response = await $fetch<string>('/demo.text', {
@@ -57,6 +60,21 @@ const exportToPDF = async () => {
     alert('导出 PDF 失败，请查看控制台')
   }
 }
+
+// 保存文件
+const saveFile = async (format: 'html' | 'text' | 'markdown') => {
+  if (!editorRef.value) return
+
+  const result = await saveQuillContent(editorRef.value as HTMLElement, {
+    filename: 'demo_document',
+    format,
+    includeStyles: true
+  })
+
+  if (!result?.success) {
+    alert('保存文件失败，请查看控制台')
+  }
+}
 </script>
 
 <template>
@@ -66,15 +84,44 @@ const exportToPDF = async () => {
       description="演示富文本编辑器加载外部文本文件"
     >
       <template #actions>
-        <AppButton 
-          @click="exportToPDF"
-          :loading="isExporting"
-          :disabled="isExporting"
-          variant="primary"
-        >
-          <i class="i-mdi-file-pdf-box mr-2" />
-          {{ isExporting ? '导出中...' : '导出 PDF' }}
-        </AppButton>
+        <div class="flex gap-2">
+          <!-- 保存下拉菜单 -->
+          <AppDropdown
+            label="保存文件"
+            icon="i-mdi-content-save"
+            variant="secondary"
+            :loading="isSaving"
+            :disabled="isSaving"
+            :items="[
+              {
+                label: '保存为 HTML',
+                icon: 'i-mdi-language-html5',
+                onClick: () => saveFile('html')
+              },
+              {
+                label: '保存为 Markdown',
+                icon: 'i-mdi-markdown',
+                onClick: () => saveFile('markdown')
+              },
+              {
+                label: '保存为文本',
+                icon: 'i-mdi-text',
+                onClick: () => saveFile('text')
+              }
+            ]"
+          />
+
+          <!-- PDF 导出按钮 -->
+          <AppButton 
+            @click="exportToPDF"
+            :loading="isExporting"
+            :disabled="isExporting"
+            variant="primary"
+          >
+            <i class="i-mdi-file-pdf-box mr-2" />
+            {{ isExporting ? '导出中...' : '导出 PDF' }}
+          </AppButton>
+        </div>
       </template>
     </PageHeader>
 
