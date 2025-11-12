@@ -45,6 +45,139 @@ export function usePdfExport() {
   }
 
   /**
+   * 分页检测并在末尾添加安全间距，避免文字被截断
+   * @param containerSelector - 容器选择器（默认为 Quill 编辑器容器）
+   * @param options - 配置选项
+   */
+  const addPageBreakSafetyMargin = (
+    containerSelector = '.ql-container',
+    options: { 
+      pageHeight?: number
+      safetyMargin?: number
+      scale?: number
+      elementSelector?: string
+    } = {}
+  ) => {
+    if (!process.client) return
+
+    const {
+      pageHeight = 297, // A4 高度（mm）
+      safetyMargin = 40, // 安全间距（px）
+      scale = 2, // 缩放比例，与 PDF 导出配置一致
+      elementSelector // 自定义元素选择器
+    } = options
+
+    // 计算 A4 高度（考虑缩放）
+    // 297mm = 1122.52px (96dpi)，但需要考虑 html2canvas 的 scale
+    const A4_HEIGHT_PX = (pageHeight * 96 / 25.4) * scale
+    const MARGIN_CLASS = 'pdf-page-break-margin'
+
+    // 移除之前添加的安全间距节点
+    document.querySelectorAll(`.${MARGIN_CLASS}`).forEach(el => el.remove())
+
+    const containers = document.querySelectorAll<HTMLElement>(containerSelector)
+    if (containers.length === 0) {
+      console.warn(`未找到容器: ${containerSelector}`)
+      return
+    }
+
+    containers.forEach((container) => {
+      // 获取容器的滚动位置
+      const scrollTop = container.scrollTop || 0
+      
+      // 确定要处理的元素
+      let targetContainer: HTMLElement = container
+      
+      // 如果容器是 .ql-container，尝试找到 .ql-editor
+      if (container.classList.contains('ql-container') || container.querySelector('.ql-editor')) {
+        const editor = container.querySelector('.ql-editor') as HTMLElement
+        if (editor) {
+          targetContainer = editor
+        }
+      }
+      
+      // 获取所有可能导致分页的元素
+      const defaultSelector = 'p, h1, h2, h3, h4, h5, h6, ul, ol, div, blockquote, pre, table, img'
+      const selector = elementSelector || `${targetContainer === container ? '' : ''}${defaultSelector}`
+      
+      // 获取直接子元素或所有匹配元素
+      const elements = targetContainer.querySelectorAll<HTMLElement>(
+        targetContainer === container 
+          ? `:scope > ${defaultSelector}` // 如果是普通容器，只获取直接子元素
+          : defaultSelector // 如果是 ql-editor，获取所有匹配元素
+      )
+
+      // 使用数组避免在遍历时修改 DOM 导致的问题
+      const elementsToProcess: Array<{ element: HTMLElement; spacerHeight: number }> = []
+
+      elements.forEach((element) => {
+        // 跳过已添加的间距元素
+        if (element.classList.contains(MARGIN_CLASS)) return
+
+        const rect = element.getBoundingClientRect()
+        const containerRect = container.getBoundingClientRect()
+
+        // 计算元素相对于容器顶部的绝对位置（包含滚动）
+        const elementTop = rect.top - containerRect.top + scrollTop
+        const elementBottom = elementTop + rect.height
+        const elementHeight = rect.height
+
+        // 计算当前元素所在的页码
+        const currentPage = Math.floor(elementTop / A4_HEIGHT_PX)
+        const nextPageStart = (currentPage + 1) * A4_HEIGHT_PX
+
+        // 计算元素距离当前页底部的距离
+        const distanceToPageEnd = nextPageStart - elementTop
+
+        // 检查元素是否会跨页
+        const willCrossPage = elementBottom > nextPageStart
+
+        // 如果元素会跨页且距离页底部较近（小于安全间距或元素高度）
+        if (willCrossPage && distanceToPageEnd > 0 && distanceToPageEnd < Math.max(safetyMargin, elementHeight * 0.3)) {
+          // 计算需要添加的间距，使元素完全推到下一页
+          const spacerHeight = Math.ceil(distanceToPageEnd)
+          elementsToProcess.push({ element, spacerHeight })
+        }
+      })
+
+      // 批量插入间距元素（从后往前，避免位置计算错误）
+      elementsToProcess.reverse().forEach(({ element, spacerHeight }) => {
+        const spacer = document.createElement('div')
+        spacer.className = MARGIN_CLASS
+        spacer.style.height = `${spacerHeight}px`
+        spacer.style.pageBreakAfter = 'always'
+        spacer.style.breakAfter = 'page'
+        spacer.style.visibility = 'hidden' // 隐藏但占据空间
+        spacer.setAttribute('data-spacer-height', String(spacerHeight))
+
+        // 在元素前插入间距，将元素推到下一页
+        element.parentNode?.insertBefore(spacer, element)
+      })
+    })
+
+    return {
+      processed: containers.length,
+      message: `已处理 ${containers.length} 个容器的分页安全间距`
+    }
+  }
+
+  /**
+   * 移除添加的分页安全间距
+   */
+  const removePageBreakSafetyMargin = () => {
+    if (!process.client) return
+
+    const MARGIN_CLASS = 'pdf-page-break-margin'
+    const spacers = document.querySelectorAll(`.${MARGIN_CLASS}`)
+    spacers.forEach(el => el.remove())
+
+    return {
+      removed: spacers.length,
+      message: `已移除 ${spacers.length} 个分页安全间距`
+    }
+  }
+
+  /**
    * 导出 HTML 元素为 PDF
    * @param element - 要导出的 HTML 元素或选择器
    * @param options - 导出选项
@@ -178,6 +311,8 @@ export function usePdfExport() {
   return {
     isExporting: readonly(isExporting),
     exportToPdf,
-    exportQuillToPdf
+    exportQuillToPdf,
+    addPageBreakSafetyMargin,
+    removePageBreakSafetyMargin
   }
 }
