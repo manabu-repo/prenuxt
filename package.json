@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@vueup/vue-quill": "^1.2.0",
+    "dompdf.js": "^1.0.4",
     "html2pdf.js": "^0.12.1",
     "jspdf": "^3.0.3",
     "nuxt": "^4.2.0",

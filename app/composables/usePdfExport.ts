@@ -1,9 +1,9 @@
 /**
  * PDF Export Composable
- * 统一的 PDF 导出接口，支持 html2pdf、jsPDF、Playwright 和 pdfmake 四种导出方式
+ * 统一的 PDF 导出接口，支持 html2pdf、jsPDF、Playwright、pdfmake 和 dompdf 五种导出方式
  */
 
-export type PdfExportMode = 'html2pdf' | 'jspdf' | 'playwright' | 'pdfmake'
+export type PdfExportMode = 'html2pdf' | 'jspdf' | 'playwright' | 'pdfmake' | 'dompdf'
 
 export interface PdfExportOptions {
   /**
@@ -12,6 +12,7 @@ export interface PdfExportOptions {
    * - 'jspdf': 文本模式，文字可选但样式简单（客户端）
    * - 'playwright': 服务端渲染，文字可选且样式完整（推荐，需要服务端）
    * - 'pdfmake': 结构化文档，文字可选且无截断问题（客户端）
+   * - 'dompdf': 真正的PDF，文字可编辑打印，质量高体积小（客户端）✨
    * @default 'html2pdf'
    */
   mode?: PdfExportMode
@@ -100,13 +101,15 @@ export const usePdfExport = () => {
   const jspdfComposable = useJspdf()
   const playwrightComposable = usePlaywright()
   const pdfmakeComposable = usePdfmake()
+  const dompdfComposable = useDompdf()
 
-  // 合并四个 composable 的 isExporting 状态
+  // 合并五个 composable 的 isExporting 状态
   const isExporting = computed(() => 
     html2pdfComposable.isExporting.value || 
     jspdfComposable.isExporting.value ||
     playwrightComposable.isExporting.value ||
-    pdfmakeComposable.isExporting.value
+    pdfmakeComposable.isExporting.value ||
+    dompdfComposable.isExporting.value
   )
 
   /**
@@ -120,7 +123,13 @@ export const usePdfExport = () => {
   ) => {
     const { mode = 'html2pdf', ...restOptions } = options
 
-    if (mode === 'pdfmake') {
+    if (mode === 'dompdf') {
+      // dompdf 模式：真正的PDF，可编辑打印
+      return await dompdfComposable.exportToPdf(element, {
+        useCORS: true,
+        logging: false
+      })
+    } else if (mode === 'pdfmake') {
       // pdfmake 模式：结构化文档
       return await pdfmakeComposable.exportToPdf(element, {
         pageMargins: restOptions.margin ? [
@@ -168,7 +177,12 @@ export const usePdfExport = () => {
   ) => {
     const { mode = 'html2pdf', ...restOptions } = options
 
-    if (mode === 'pdfmake') {
+    if (mode === 'dompdf') {
+      return await dompdfComposable.exportQuillToPdf(editorContainer, {
+        useCORS: true,
+        logging: false
+      })
+    } else if (mode === 'pdfmake') {
       return await pdfmakeComposable.exportQuillToPdf(editorContainer, {
         pageMargins: restOptions.margin ? [
           restOptions.margin[3] * 2.83,
@@ -217,7 +231,7 @@ export const usePdfExport = () => {
     html2pdfComposable.removePageBreakSafetyMargin(element)
   }
 
-  // 兼容旧接口：直接导出四种模式的函数
+  // 兼容旧接口：直接导出五种模式的函数
   const exportHtml2pdf = html2pdfComposable.exportToPdf
   const exportQuillHtml2pdf = html2pdfComposable.exportQuillToPdf
   const exportJspdf = jspdfComposable.exportTextPdf
@@ -226,6 +240,8 @@ export const usePdfExport = () => {
   const exportQuillPlaywright = playwrightComposable.exportQuillToPdf
   const exportPdfmake = pdfmakeComposable.exportToPdf
   const exportQuillPdfmake = pdfmakeComposable.exportQuillToPdf
+  const exportDompdf = dompdfComposable.exportToPdf
+  const exportQuillDompdf = dompdfComposable.exportQuillToPdf
 
   return {
     // 状态
@@ -244,6 +260,8 @@ export const usePdfExport = () => {
     exportQuillPlaywright,
     exportPdfmake,
     exportQuillPdfmake,
+    exportDompdf,
+    exportQuillDompdf,
     
     // 工具函数
     addPageBreakSafetyMargin,
