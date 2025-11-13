@@ -130,7 +130,7 @@ export const usePlaywright = () => {
       })
 
       // 创建下载链接
-      const blob = response as Blob
+      const blob = new Blob([response as any], { type: 'application/pdf' })
       const url = URL.createObjectURL(blob)
       
       // 在新窗口打开

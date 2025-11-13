@@ -83,8 +83,8 @@ export default defineConfig({
       'border': '1px solid rgba(255, 255, 255, 0.18)'
     }],
     // 动态规则
-    [/^grid-cols-(\d+)$/, ([, d]: string[]) => ({ 'grid-template-columns': `repeat(${d}, minmax(0, 1fr))` })],
-    [/^grid-rows-(\d+)$/, ([, d]: string[]) => ({ 'grid-template-rows': `repeat(${d}, minmax(0, 1fr))` })]
+    [/^grid-cols-(\d+)$/, ([, d]) => ({ 'grid-template-columns': `repeat(${d}, minmax(0, 1fr))` })],
+    [/^grid-rows-(\d+)$/, ([, d]) => ({ 'grid-template-rows': `repeat(${d}, minmax(0, 1fr))` })]
   ],
   
   // 主题配置
