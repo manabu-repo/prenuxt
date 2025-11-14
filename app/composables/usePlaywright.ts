@@ -44,6 +44,12 @@ export interface PlaywrightPdfOptions {
   footerTemplate?: string
   
   /**
+   * 页码格式化函数（默认启用页码）
+   * @default (current, total) => `页码 ${current} / 共 ${total} 页`
+   */
+  pageNumberFormat?: string | ((current: number, total: number) => string)
+  
+  /**
    * 是否优先使用 CSS 定义的页面大小
    * @default false
    */
@@ -115,9 +121,10 @@ export const usePlaywright = () => {
           },
           format: options.format || 'A4',
           printBackground: options.printBackground !== false,
-          displayHeaderFooter: options.displayHeaderFooter || false,
+          displayHeaderFooter: options.displayHeaderFooter !== false,
           headerTemplate: options.headerTemplate || '',
           footerTemplate: options.footerTemplate || '',
+          pageNumberFormat: options.pageNumberFormat,
           preferCSSPageSize: options.preferCSSPageSize || false
         }
       }

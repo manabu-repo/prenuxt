@@ -26,7 +26,7 @@ const { isSaving, saveQuillContent } = useFileSave()
 
 onMounted(async () => {
   try {
-    const response = await $fetch<string>('/demo.text', {
+    const response = await $fetch<string>('/demo_document.html', {
       responseType: 'text'
     })
 
@@ -48,7 +48,7 @@ onMounted(async () => {
 
 // 导出为 PDF
 // 导出 PDF
-const exportToPDF = async (mode: 'html2pdf' | 'jspdf' | 'playwright' | 'pdfmake' | 'dompdf' = 'html2pdf') => {
+const exportToPDF = async (mode: 'html2pdf' | 'jspdf' | 'playwright' | 'pdfmake' | 'dompdf' | 'chromium' = 'html2pdf') => {
   if (!editorRef.value) return
 
   const result = await exportQuillToPdf(editorRef.value as HTMLElement, {
@@ -64,7 +64,8 @@ const exportToPDF = async (mode: 'html2pdf' | 'jspdf' | 'playwright' | 'pdfmake'
       jspdf: '文本',
       playwright: 'Playwright',
       pdfmake: 'pdfMake',
-      dompdf: 'dompdf'
+      dompdf: 'dompdf',
+      chromium: 'Chromium'
     }
     alert(`导出 ${modeNames[mode]} PDF 失败，请查看控制台`)
   }
@@ -144,7 +145,7 @@ const saveFile = async (format: 'html' | 'text' | 'markdown') => {
                 onClick: () => exportToPDF('pdfmake')
               },
               {
-                label: 'dompdf（客户端 不支持分页）🚀',
+                label: 'dompdf（客户端 不支持分页）',
                 icon: 'i-mdi-file-pdf-box',
                 onClick: () => exportToPDF('dompdf')
               },
@@ -152,6 +153,10 @@ const saveFile = async (format: 'html' | 'text' | 'markdown') => {
                 label: 'Playwright（服务端）⭐',
                 icon: 'i-mdi-server',
                 onClick: () => exportToPDF('playwright')
+              }, {
+                label: 'Chromium（服务端 Serverless 优化）🚀',
+                icon: 'i-mdi-chromium',
+                onClick: () => exportToPDF('chromium')
               }
             ]"
           />

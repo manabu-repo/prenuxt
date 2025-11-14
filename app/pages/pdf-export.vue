@@ -2,7 +2,7 @@
 import { ref, nextTick } from 'vue'
 
 const url = ref('')
-const mode = ref<'html2pdf'|'jspdf'|'playwright'|'pdfmake'>('html2pdf')
+const mode = ref<'html2pdf'|'jspdf'|'playwright'|'pdfmake'|'chromium'>('html2pdf')
 const scale = ref(2)
 const quality = ref(0.98)
 const orientation = ref<'portrait'|'landscape'>('portrait')
@@ -162,6 +162,33 @@ const exportPdf = async () => {
       message.value = '导出完成（Playwright）'
       exporting.value = false
       return // Playwright 不需要隐藏容器
+    } else if (mode.value === 'chromium') {
+      // Chromium 服务端导出（Serverless 优化版本）
+      const response = await $fetch('/api/export-chromium', {
+        method: 'POST',
+        body: {
+          url: url.value,
+          options: {
+            format: 'A4',
+            printBackground: true,
+            margin: { top: '20mm', right: '15mm', bottom: '25mm', left: '15mm' }
+          }
+        },
+        responseType: 'blob'
+      })
+      
+      // 下载 PDF
+      const blob = new Blob([response as any], { type: 'application/pdf' })
+      const downloadUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = downloadUrl
+      a.download = 'export-chromium.pdf'
+      a.click()
+      URL.revokeObjectURL(downloadUrl)
+      
+      message.value = '导出完成（Chromium - Serverless 优化）'
+      exporting.value = false
+      return // Chromium 不需要隐藏容器
     } else if (mode.value === 'pdfmake') {
       // pdfmake 结构化导出
       try {
@@ -341,10 +368,14 @@ const confirmExport = async () => {
           <option value="html2pdf">html2pdf (客户端，保留样式，图片模式)</option>
           <option value="jspdf">jsPDF (客户端，图片拆页)</option>
           <option value="playwright">Playwright (服务端，文字可选，需安装)</option>
+          <option value="chromium">Chromium (服务端，Serverless 优化) 🚀</option>
           <option value="pdfmake">pdfmake (客户端，结构化文档)</option>
         </select>
         <div v-if="mode === 'playwright'" class="text-xs text-yellow-600 mt-1">
           ⚠️ 需要安装 playwright: <code class="bg-gray-100 px-1">pnpm add -D playwright</code>
+        </div>
+        <div v-if="mode === 'chromium'" class="text-xs text-green-600 mt-1">
+          🚀 使用 @sparticuz/chromium，体积小（~50MB）、冷启动快，推荐生产环境！
         </div>
         <div v-if="mode === 'pdfmake'" class="text-xs text-yellow-600 mt-1">
           ⚠️ 需要安装 pdfmake: <code class="bg-gray-100 px-1">pnpm add pdfmake</code>
