@@ -96,6 +96,48 @@ export const useHtml2pdf = () => {
     element.classList.remove('pdf-export-content')
   }
 
+  const formatEditor = () => {
+    const targetLiElements = document.querySelectorAll('li:not([class')
+    targetLiElements.forEach((li) => {
+      const dom = li as HTMLElement
+      dom.classList.add('ql-indent-3')
+      dom.style.breakInside = 'auto'
+      dom.style.setProperty('padding-left', '0', 'important')
+    })
+  }
+
+  // 添加过程预处理函数
+  const preprocessHandler = () => {
+    const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6')
+    headings.forEach((heading) => {
+      const dom = heading as HTMLElement
+      dom.style.breakAfter = 'auto'
+      dom.style.orphans = '4'
+      dom.style.widows = '4'
+      dom.style.margin = '0.2rem 0'
+    })
+
+    const paragraphs = document.querySelectorAll('p, div, li, blockquote')
+    paragraphs.forEach((para) => {
+      const dom = para as HTMLElement
+      dom.style.breakInside = 'auto'
+      dom.style.breakAfter = 'auto'
+      dom.style.breakBefore = 'auto'
+      dom.style.orphans = '2'
+      dom.style.widows = '2'
+      dom.style.margin = '0.2rem 0'
+    })
+
+    const lists = document.querySelectorAll('ol, ul')
+    lists.forEach((list) => {
+      const dom = list as HTMLElement
+      dom.style.breakBefore = 'auto'
+      dom.style.orphans = '2'
+      dom.style.widows = '2'
+      dom.style.margin = '1rem 0'
+    })
+  }
+
   /**
    * 导出 HTML 元素为 PDF（图片模式）
    * @param element - 要导出的 HTML 元素或选择器
@@ -130,7 +172,7 @@ export const useHtml2pdf = () => {
       const {
         margin = [20, 15, 25, 15],
         showPageNumbers = true,
-        pageNumberFormat = (current: number, total: number) => `Page ${current} / ${total}`,
+        pageNumberFormat = (current: number, total: number) => `${current} / ${total}`,
         quality = 0.95,
         scale = 1,
         format = 'a4',
@@ -157,6 +199,9 @@ export const useHtml2pdf = () => {
         },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       }
+
+      preprocessHandler()
+      formatEditor()
 
       // 生成 PDF
       const worker = html2pdf().set(opt).from(targetElement)
