@@ -1,6 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 // Centralized env loader and schema validation
-import { parsedEnv, NODE_ENV, allowDevtools} from './server/env'
+import { parsedEnv, NODE_ENV, allowDevtools } from './server/env'
+import strip from 'vite-plugin-strip'
+
+// Console control: enable console in 'local' and 'test', disable in others
+const allowConsole = ['local', 'test'].includes(NODE_ENV)
 
 // Set environment variables that some client setups and libraries check to allow
 // Vue devtools. We set both VUE_DEVTOOLS and VUE_APP_DEVTOOLS for broader coverage.
@@ -47,5 +51,30 @@ export default defineNuxtConfig({
     },
     // server-only values can be added here if needed:
     // apiSecret: parsedEnv.API_SECRET
+  },
+
+  // Vite build configuration: in production we strip console/debugger using terser.
+  vite: {
+    plugins: [
+      // Remove console/debugger calls during dev and build when consoles are not allowed
+      // (we cast to any to avoid type mismatches between vite/plugin versions)
+      ...(allowConsole ? [] : [ (strip as any)({
+        include: ['**/*.(ts|js|vue)'],
+        functions: ['console.*'],
+        debugger: true
+      }) as any ])
+    ],
+    build: {
+      // Use terser in production to allow drop_console option; esbuild is faster but
+      // doesn't support all terser options. We switch based on NODE_ENV.
+      minify: NODE_ENV === 'production' ? 'terser' : 'esbuild',
+      // If console is NOT allowed, instruct terser to drop console/debugger in built bundles
+      terserOptions: !allowConsole && NODE_ENV === 'production' ? {
+        compress: {
+          drop_console: true,
+          drop_debugger: true
+        }
+      } : undefined
+    }
   }
 })
