@@ -6,6 +6,13 @@ import strip from 'vite-plugin-strip'
 // Console control: enable console in 'local' and 'test', disable in others
 const allowConsole = ['local', 'test'].includes(NODE_ENV)
 
+// Source map strategy:
+// - development: 'inline' (fast rebuilds, easier local debugging)
+// - test: true (generate .map files to help debugging in CI or test viewers)
+// - production: 'hidden' (generate source maps but don't expose via sourceMappingURL; upload to error tracking)
+// If you don't want source maps in production at all, set to false.
+const sourceMapSetting = NODE_ENV === 'development' ? 'inline' : NODE_ENV === 'test' ? true : 'hidden'
+
 // Set environment variables that some client setups and libraries check to allow
 // Vue devtools. We set both VUE_DEVTOOLS and VUE_APP_DEVTOOLS for broader coverage.
 if (allowDevtools) {
@@ -16,16 +23,17 @@ if (allowDevtools) {
   process.env.VUE_APP_DEVTOOLS = 'false'
 }
 
+// Allow skipping UnoCSS (useful for diagnosing build issues) by setting SKIP_UNOCSS=true
+const skipUno = process.env.SKIP_UNOCSS === 'true'
+const modulesList = skipUno ? ['@nuxtjs/color-mode'] : ['@unocss/nuxt', '@nuxtjs/color-mode']
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   // Enable Nuxt devtools only for allowed environments (dev/test/local).
   devtools: { enabled: allowDevtools },
   
   // 模块配置
-  modules: [
-    '@unocss/nuxt',
-    '@nuxtjs/color-mode'
-  ],
+  modules: modulesList,
   
   // UnoCSS 配置
   css: [
@@ -68,6 +76,8 @@ export default defineNuxtConfig({
       // Use terser in production to allow drop_console option; esbuild is faster but
       // doesn't support all terser options. We switch based on NODE_ENV.
       minify: NODE_ENV === 'production' ? 'terser' : 'esbuild',
+      // Source maps strategy (see top-level `sourceMapSetting` for policy)
+      sourcemap: sourceMapSetting as any,
       // If console is NOT allowed, instruct terser to drop console/debugger in built bundles
       terserOptions: !allowConsole && NODE_ENV === 'production' ? {
         compress: {

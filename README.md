@@ -36,3 +36,28 @@ pnpx playwright install chromium
 **详细文档：** [docs/PDF_EXPORT_GUIDE.md](docs/PDF_EXPORT_GUIDE.md)
 
 ---
+
+## Build verification and source maps
+
+We provide a small verification script that runs after build to ensure production artifacts do not contain unwanted `console.*` calls and that source maps are present when expected.
+
+- `pnpm run build:verify` — runs `pnpm run build` and then `node scripts/verify-build.js` which:
+	- searches the build output for `console.` occurrences (fails if found),
+	- lists any generated `.map` files (warning if none found).
+
+Uploading source maps to an error-tracking service (Sentry) is recommended when using `hidden` source maps in production.
+
+An example upload script is provided at `scripts/upload-sourcemaps.sh`. It uses `sentry-cli` and requires the environment variables:
+
+- `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`, and optionally `SENTRY_RELEASE`.
+
+Usage example (CI):
+
+```bash
+# Build and upload sourcemaps
+pnpm run build
+SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN SENTRY_PROJECT=my-project SENTRY_ORG=my-org ./scripts/upload-sourcemaps.sh
+```
+
+If you use another tracker, adapt the upload script accordingly.
+
