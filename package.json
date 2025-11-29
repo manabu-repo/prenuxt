@@ -7,6 +7,8 @@
     "dev": "NODE_ENV=development nuxt dev",
     "dev:local": "NODE_ENV=local nuxt dev",
     "dev:test": "NODE_ENV=test nuxt dev",
+    "lint:console": "node scripts/lint-console.cjs",
+    "build:verify": "pnpm run build && node scripts/verify-build.cjs",
     "generate": "nuxt generate",
     "preview": "NODE_ENV=production nuxt preview",
     "start:prod": "NODE_ENV=production nuxt start",

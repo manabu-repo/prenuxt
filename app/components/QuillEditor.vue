@@ -120,7 +120,8 @@ const editorToolbar = computed(() => {
   @apply min-h-[200px] text-gray-900 dark:text-gray-100;
 }
 
-.quill-editor-wrapper :deep(.ql-editor.ql-blank::before) {
+.quill-editor-wrapper :deep(.ql-editor.ql-blank) {
+  /* Move color to the element instead of the pseudo-element to avoid PostCSS/@apply issues */
   @apply text-gray-400 dark:text-gray-500;
 }
 
