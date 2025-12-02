@@ -219,6 +219,111 @@ export const usePlaywright = () => {
     })
   }
 
+   const positionFooterOnLastPage = (
+    nonFooterContainers: HTMLElement[],
+    footer: HTMLElement,
+    A4_MAX_HEIGHT_PX: number,
+    A4_PADDING: number,
+  ) => {
+    if (nonFooterContainers.length < 2) {
+      console.info('[positionFooterOnLastPage] Only 1 or fewer containers, skipping Footer optimization')
+      return
+    }
+
+    const singlePagePx = A4_MAX_HEIGHT_PX
+    const footerHeight = footer.offsetHeight + 15
+
+    console.info('[positionFooterOnLastPage] Start processing...')
+    console.info('Total containers:', nonFooterContainers.length)
+    console.info('Footer height (px):', footerHeight)
+
+    // 计算容器内容高度（排除 Footer）
+    const calculatePageHeight = (container: HTMLElement): number => {
+      let height = 0
+      for (let i = 0; i < container.children.length; i++) {
+        const child = container.children[i] as HTMLElement
+        if (!child.classList.contains('pdf-footer')) {
+          height += child.offsetHeight
+        }
+      }
+      return height
+    }
+
+    // 检查最后一页和倒数第二页的内容高度
+    const lastContainer = nonFooterContainers[nonFooterContainers.length - 1]
+    const secondLastContainer = nonFooterContainers[nonFooterContainers.length - 2]
+
+    if (!lastContainer || !secondLastContainer) {
+      console.info('[positionFooterOnLastPage] Cannot access containers, skipping')
+      return
+    }
+
+    const lastPageContentHeight = calculatePageHeight(lastContainer)
+    const availableOnSecondLast = singlePagePx - lastPageContentHeight
+
+    console.info('Last page content height (px):', lastPageContentHeight)
+    console.info('Available space on second last page (px):', availableOnSecondLast)
+
+    if (availableOnSecondLast >= footerHeight) {
+      console.info('[positionFooterOnLastPage] Found space on last page, moving Footer...')
+
+      if (footer.parentElement) {
+        footer.parentElement.removeChild(footer)
+      }
+      lastContainer.appendChild(footer)
+
+      // 设置 Footer 样式为绝对定位（底部对齐）
+      const footerAbsoluteStyles: Record<string, string> = {
+        'position': 'absolute',
+        'bottom': '0',
+        'left': '0',
+        'right': '0',
+        'margin': '0',
+        'background': 'white',
+        'box-sizing': 'border-box',
+        'height': 'auto',
+        'page-break-inside': 'avoid',
+      }
+      Object.entries(footerAbsoluteStyles).forEach(([key, value]) => {
+        footer.style.setProperty(key, value, 'important')
+      })
+
+      secondLastContainer.style.setProperty('position', 'relative', 'important')
+
+      if (lastContainer.parentElement) {
+        lastContainer.remove()
+      }
+      nonFooterContainers.pop()
+
+      console.info('[positionFooterOnLastPage] Footer moved to second last page. Remaining containers:', nonFooterContainers.length)
+    }
+    else {
+      console.info('[positionFooterOnLastPage] Not enough space on second last page, keeping Footer on last page')
+
+      // 保持原状：Footer 保留在最后一页（作为静态元素）
+      if (footer.parentElement !== lastContainer) {
+        if (footer.parentElement) {
+          footer.parentElement.removeChild(footer)
+        }
+        lastContainer.appendChild(footer)
+      }
+
+      const footerStaticStyles: Record<string, string> = {
+        'background': 'white',
+        'box-sizing': 'border-box',
+        'height': 'auto',
+        'page-break-inside': 'avoid',
+        'position': 'static',
+        'margin': '10mm auto 0',
+      }
+      Object.entries(footerStaticStyles).forEach(([key, value]) => {
+        footer.style.setProperty(key, value, 'important')
+      })
+
+      console.info('[positionFooterOnLastPage] Footer remains on last page')
+    }
+  }
+
   return {
     isExporting: readonly(isExporting),
     exportToPdf,
