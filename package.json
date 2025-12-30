@@ -20,6 +20,7 @@
     "dompdf.js": "^1.0.4",
     "html2pdf.js": "^0.12.1",
     "jspdf": "^3.0.3",
+    "markdown-it": "^14.1.0",
     "nuxt": "^4.2.0",
     "pdfmake": "^0.2.20",
     "puppeteer-core": "^24.30.0",

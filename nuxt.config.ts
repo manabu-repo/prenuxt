@@ -35,6 +35,16 @@ export default defineNuxtConfig({
   // 模块配置
   modules: modulesList,
   
+  // @nuxt/content configuration
+  content: {
+    sources: {
+      docs: {
+        driver: 'fs',
+        base: './md'
+      }
+    }
+  },
+  
   // UnoCSS 配置
   css: [
     '@unocss/reset/tailwind.css',
