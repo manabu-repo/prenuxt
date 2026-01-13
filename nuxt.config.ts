@@ -33,7 +33,40 @@ export default defineNuxtConfig({
   devtools: { enabled: allowDevtools },
   
   // 模块配置
-  modules: modulesList,
+  modules: ['@nuxt/image', ...modulesList],
+  
+  // @nuxt/image 配置 - 优化图片加载性能
+  image: {
+    // 使用默认提供者处理图片
+    provider: 'ipx',
+    // 图片优化配置
+    format: ['webp'], // 优先使用 webp 格式
+    quality: 80, // JPEG/WebP 质量
+    screens: {
+      xs: 320,
+      sm: 640,
+      md: 768,
+      lg: 1024,
+      xl: 1280,
+      xxl: 1536
+    },
+    // 支持标准和高清屏幕
+    densities: [1, 2],
+    presets: {
+      avatar: {
+        modifiers: {
+          width: 50,
+          height: 50
+        }
+      },
+      thumbnail: {
+        modifiers: {
+          width: 200,
+          height: 200
+        }
+      }
+    }
+  },
   
   // @nuxt/content configuration
   content: {
@@ -95,6 +128,12 @@ export default defineNuxtConfig({
           drop_debugger: true
         }
       } : undefined
+    },
+    // 图片优化配置
+    assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg', '**/*.webp'],
+    ssr: {
+      // 确保导入的图片在 SSR 时也能被正确处理
+      external: []
     }
   }
 })
