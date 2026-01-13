@@ -11,31 +11,33 @@ const { getImageAttrs } = useOptimizedImage()
 
 <template>
   <div class="flex flex-col lg:flex-row items-center justify-center min-h-screen bg-gray-50 p-4 gap-4">
-    <!-- 第一张图片：来自 public 目录 -->
+    <!-- 第一张图片：LCP 关键内容 -->
     <div
       class="w-full lg:w-1/2 max-w-2xl flex-shrink-0"
       :style="{ aspectRatio: ASPECT_RATIO }"
     >
       <NuxtImg
-        src="/images/ian-1.png"
+        src="/images/cat.jpg"
         alt="Preference Page"
         width="800"
         height="600"
+        :sizes="'800px'"
         loading="eager"
+        fetchpriority="high"
         format="webp"
         quality="80"
-        class="w-full h-full object-cover rounded-lg shadow-lg"
+        class="w-full h-full object-cover rounded-lg shadow-lg object-cover"
         @error="console.error('Image 1 loading failed')"
       />
     </div>
 
-    <!-- 第二张图片：来自 assets/img 目录 - 优化方案 -->
+    <!-- 第二张图片：辅助内容 -->
     <div
       class="w-full lg:w-1/2 max-w-2xl flex-shrink-0"
       :style="{ aspectRatio: ASPECT_RATIO }"
     >
-    <img
-        v-bind="getImageAttrs(flowerImg, 'Flower Image', { 
+      <img
+        v-bind="getImageAttrs(flowerImg, 'Flower Image', {
           width: 800,
           height: 600,
           fetchPriority: 'auto'
@@ -48,11 +50,12 @@ const { getImageAttrs } = useOptimizedImage()
 </template>
 
 <style scoped>
-/* 确保图片容器不会抖动 */
+/* 防止 CLS 和布局抖动 */
 div[style*="aspectRatio"] {
-  /* 防止宽度变化 */
   box-sizing: border-box;
-  /* 防止在 flex 中收缩 */
+  /* ✅ 关键：防止 flex 容器在内容加载前收缩 */
   min-height: 0;
+  /* 防止图片导致容器变形 */
+  overflow: hidden;
 }
 </style>
