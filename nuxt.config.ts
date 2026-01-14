@@ -32,6 +32,18 @@ export default defineNuxtConfig({
   // Enable Nuxt devtools only for allowed environments (dev/test/local).
   devtools: { enabled: allowDevtools },
   
+  // HTML head 配置：预加载关键资源
+  app: {
+    head: {
+      link: [
+        // ✅ 预加载关键 CSS 文件
+        { rel: 'preload', as: 'style', href: '/_nuxt/entry.css' },
+        { rel: 'preload', as: 'style', href: '/_nuxt/__uno.css' },
+        { rel: 'preload', as: 'style', href: '/reset/tailwind.css' },
+      ],
+    }
+  },
+  
   // 模块配置
   modules: ['@nuxt/image', ...modulesList],
   
@@ -83,6 +95,20 @@ export default defineNuxtConfig({
     '@unocss/reset/tailwind.css',
     '~/assets/css/main.css'
   ],
+  
+  // UnoCSS 优化配置
+  unocss: {
+    // ✅ 预缓存常用类名，加快首屏 CSS 生成
+    safelist: [
+      'flex', 'flex-col', 'lg:flex-row',
+      'items-center', 'justify-center',
+      'min-h-screen', 'bg-gray-50', 'p-4', 'gap-4',
+      'w-full', 'lg:w-1/2', 'max-w-2xl',
+      'flex-shrink-0', 'overflow-hidden',
+      'rounded-lg', 'shadow-lg',
+      'w-full', 'h-full', 'object-cover'
+    ]
+  },
   
   // Color Mode 配置
   colorMode: {

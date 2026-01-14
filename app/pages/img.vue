@@ -9,18 +9,19 @@ const ASPECT_RATIO = '4 / 3'
       class="w-full lg:w-1/2 max-w-2xl flex-shrink-0"
       :style="{ aspectRatio: ASPECT_RATIO }"
     >
-      <!-- <NuxtImg
+      <NuxtImg
         src="/images/ian-1.png"
         alt="Preference Page"
         width="800"
         height="600"
-        loading="eager"
+        :sizes="'800'"
+        loading="lazy"
         format="webp"
         quality="80"
         fetchpriority="high"
         class="w-full h-full object-cover rounded-lg shadow-lg"
         @error="console.error('Image 1 loading failed')"
-      /> -->
+      />
       NuxtImg
     </div>
   </div>
