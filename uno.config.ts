@@ -65,26 +65,7 @@ export default defineConfig({
     ['absolute-center', 'absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'],
     
     // 文本样式
-    ['text-gradient', 'bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent'],
-    
-    // 动画
-    ['animate-fade-in', 'animate-duration-300 animate-ease-in-out animate-fade-in'],
-    ['animate-slide-up', 'animate-duration-300 animate-ease-out animate-slide-in-up']
-  ],
-  
-  // 规则
-  rules: [
-    // 自定义规则示例
-    ['shadow-glass', { 'box-shadow': '0 8px 32px 0 rgba(31, 38, 135, 0.37)' }],
-    ['backdrop-glass', { 
-      'backdrop-filter': 'blur(4px)', 
-      '-webkit-backdrop-filter': 'blur(4px)',
-      'background': 'rgba(255, 255, 255, 0.18)',
-      'border': '1px solid rgba(255, 255, 255, 0.18)'
-    }],
-    // 动态规则
-    [/^grid-cols-(\d+)$/, ([, d]) => ({ 'grid-template-columns': `repeat(${d}, minmax(0, 1fr))` })],
-    [/^grid-rows-(\d+)$/, ([, d]) => ({ 'grid-template-rows': `repeat(${d}, minmax(0, 1fr))` })]
+    ['text-gradient', 'bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent']
   ],
   
   // 主题配置
@@ -101,34 +82,6 @@ export default defineConfig({
         700: '#1d4ed8',
         800: '#1e40af',
         900: '#1e3a8a'
-      },
-      gray: {
-        50: '#f9fafb',
-        100: '#f3f4f6',
-        200: '#e5e7eb',
-        300: '#d1d5db',
-        400: '#9ca3af',
-        500: '#6b7280',
-        600: '#4b5563',
-        700: '#374151',
-        800: '#1f2937',
-        900: '#111827'
-      }
-    },
-    fontFamily: {
-      sans: ['Inter', 'ui-sans-serif', 'system-ui'],
-      mono: ['Fira Code', 'ui-monospace', 'monospace']
-    },
-    animation: {
-      keyframes: {
-        'fade-in': {
-          '0%': { opacity: 0 },
-          '100%': { opacity: 1 }
-        },
-        'slide-in-up': {
-          '0%': { transform: 'translateY(100%)', opacity: 0 },
-          '100%': { transform: 'translateY(0)', opacity: 1 }
-        }
       }
     }
   },
@@ -137,26 +90,6 @@ export default defineConfig({
   safelist: [
     'bg-red-500',
     'bg-green-500',
-    'bg-blue-500',
-    'bg-yellow-500',
-    'text-red-500',
-    'text-green-500',
-    'text-blue-500',
-    'text-yellow-500'
-  ],
-  
-  // 内容检测配置
-  content: {
-    pipeline: {
-      include: [
-        /\.(vue|svelte|[jt]sx?|mdx?|astro|elm|php|phtml|html)($|\?)/,
-        'components/**/*.{vue,js,ts}',
-        'layouts/**/*.vue',
-        'pages/**/*.vue',
-        'composables/**/*.{js,ts}',
-        'plugins/**/*.{js,ts}',
-        'app.vue'
-      ]
-    }
-  }
+    'bg-blue-500'
+  ]
 })
