@@ -48,6 +48,7 @@ export interface ChromiumPdfOptions {
 
 /**
  * Chromium PDF 导出 Composable
+ * 按需加载策略：只有在调用导出函数时才会触发服务器端 Chromium 的加载
  */
 export function useChromium() {
   const loading = ref(false)
@@ -59,6 +60,9 @@ export function useChromium() {
    * @param html - HTML 内容字符串
    * @param options - PDF 导出选项
    * @returns PDF Blob 对象
+   * 
+   * 按需加载：仅在此函数被调用时，服务器端才会动态导入 @sparticuz/chromium
+   * 这样初始加载不会包含 20-30MB 的 Chromium 二进制文件
    */
   async function exportToPdf(html: string, options: ChromiumPdfOptions = {}): Promise<Blob> {
     loading.value = true
@@ -105,7 +109,7 @@ export function useChromium() {
       // 创建 data URL
       const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(fullHtml)}`
 
-      // 调用服务器端 API
+      // 调用服务器端 API（服务器端会动态导入 @sparticuz/chromium）
       const response = await $fetch('/api/export-chromium', {
         method: 'POST',
         body: {

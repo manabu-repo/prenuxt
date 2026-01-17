@@ -92,13 +92,26 @@ export interface PdfExportOptions {
 }
 
 export const usePdfExport = () => {
-  // 导入底层 hooks
+  // 导入底层 hooks - 除了 chromium 其他都静态导入
   const html2pdfComposable = useHtml2pdf()
   const jspdfComposable = useJspdf()
   const playwrightComposable = usePlaywright()
   const pdfmakeComposable = usePdfmake()
   const dompdfComposable = useDompdf()
-  const chromiumComposable = useChromium()
+  
+  // Chromium composable 延迟初始化
+  let chromiumComposable: ReturnType<typeof useChromium> | null = null
+  
+  /**
+   * 延迟初始化 Chromium Composable
+   * 仅在首次使用时创建，之后复用
+   */
+  const getChromiumComposable = () => {
+    if (!chromiumComposable) {
+      chromiumComposable = useChromium()
+    }
+    return chromiumComposable
+  }
 
   // 合并六个 composable 的 isExporting 状态
   const isExporting = computed(() => 
@@ -107,7 +120,7 @@ export const usePdfExport = () => {
     playwrightComposable.isExporting.value ||
     pdfmakeComposable.isExporting.value ||
     dompdfComposable.isExporting.value ||
-    chromiumComposable.loading.value
+    (chromiumComposable?.loading.value ?? false)
   )
 
   /**
@@ -123,11 +136,14 @@ export const usePdfExport = () => {
 
     if (mode === 'chromium') {
       // Chromium 模式：Serverless 优化，体积小冷启动快
+      // ⚡️ 按需加载：只在此处首次调用时才初始化 chromium
+      const chromium = getChromiumComposable()
+      
       const el = typeof element === 'string' ? document.querySelector(element) : element
       if (!el) throw new Error('Element not found')
       
       const html = el instanceof HTMLElement ? el.innerHTML : ''
-      const blob = await chromiumComposable.exportToPdf(html, {
+      const blob = await chromium.exportToPdf(html, {
         margin: restOptions.margin ? {
           top: `${restOptions.margin[0]}mm`,
           right: `${restOptions.margin[1]}mm`,
@@ -142,7 +158,7 @@ export const usePdfExport = () => {
       })
       
       // 自动下载
-      chromiumComposable.downloadPdf(blob, 'export.pdf')
+      chromium.downloadPdf(blob, 'export.pdf')
       return blob
     } else if (mode === 'dompdf') {
       // dompdf 模式：真正的PDF，可编辑打印
@@ -213,7 +229,7 @@ export const usePdfExport = () => {
       const quillEditor = el.querySelector('.ql-editor')
       const html = quillEditor?.innerHTML || ''
       
-      const blob = await chromiumComposable.exportQuillToPdf(html, {
+      const blob = await chromiumComposable?.exportQuillToPdf(html, {
         margin: restOptions.margin ? {
           top: `${restOptions.margin[0]}mm`,
           right: `${restOptions.margin[1]}mm`,
@@ -227,7 +243,7 @@ export const usePdfExport = () => {
         scale: restOptions.scale
       })
       
-      chromiumComposable.downloadPdf(blob, 'quill-export.pdf')
+      chromiumComposable?.downloadPdf(blob as never, 'quill-export.pdf')
       return blob
     } else if (mode === 'dompdf') {
       return await dompdfComposable.exportQuillToPdf(editorContainer, {
