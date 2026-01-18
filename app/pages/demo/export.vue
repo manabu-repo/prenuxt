@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
 
+definePageMeta({
+  middleware: 'demo'
+})
+
 const url = ref('')
 const mode = ref<'html2pdf'|'jspdf'|'playwright'|'pdfmake'|'chromium'>('html2pdf')
 const scale = ref(2)
@@ -428,7 +432,6 @@ const confirmExport = async () => {
         {{ message }}
       </div>
 
-      <!-- 预览区域 -->
       <div v-if="previewHtml" class="mt-6">
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-lg font-semibold">内容预览</h2>
