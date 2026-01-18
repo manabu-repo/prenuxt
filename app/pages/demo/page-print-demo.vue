@@ -14,6 +14,9 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({
+  middleware: 'demo'
+})
 // 无需特殊逻辑
 </script>
 

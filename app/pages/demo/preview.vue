@@ -3,7 +3,8 @@
 import '~/assets/css/pdf-export.css'
 
 definePageMeta({
-  layout: 'default'
+  layout: 'default',
+  middleware: 'demo'
 })
 
 useHead({
@@ -95,7 +96,7 @@ const saveFile = async (format: 'html' | 'text' | 'markdown') => {
     >
       <template #actions>
         <div class="flex gap-2">
-          <!-- 保存下拉菜单 -->
+
           <AppDropdown
             label="保存文件"
             icon="i-mdi-content-save"
@@ -121,7 +122,6 @@ const saveFile = async (format: 'html' | 'text' | 'markdown') => {
             ]"
           />
 
-          <!-- PDF 导出下拉菜单 -->
           <AppDropdown
             label="导出 PDF"
             icon="i-mdi-file-pdf-box"
