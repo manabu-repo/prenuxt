@@ -25,3 +25,5 @@ logs
 
 # Eslint
 .eslintcache
+
+i18n/
