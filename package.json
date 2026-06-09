@@ -41,6 +41,7 @@
     "pdfmake": "^0.2.20",
     "playwright": "^1.56.1",
     "puppeteer-core": "^24.30.0",
+    "sass-embedded": "^1.100.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "unocss": "^66.5.5",
